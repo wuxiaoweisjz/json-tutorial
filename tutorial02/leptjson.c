@@ -1,6 +1,7 @@
 #include "leptjson.h"
 #include <assert.h>  /* assert() */
 #include <stdlib.h>  /* NULL, strtod() */
+#include <stdio.h>
 
 #define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
 
@@ -44,7 +45,30 @@ static int lept_parse_null(lept_context* c, lept_value* v) {
 
 static int lept_parse_number(lept_context* c, lept_value* v) {
     char* end;
-    /* \TODO validate number */
+    //开头只能为'-'/数字
+    if (!ISDIGIT(c->json[0]) && c->json[0] != '-') {
+        return LEPT_PARSE_INVALID_VALUE;
+    }
+
+    // '.'后至少有一位数字
+    char* dot = c->json;
+    while (*dot != '\0') {
+        if (*dot == '.' && (*(dot+1) == '\0' || !ISDIGIT(*(dot+1))))
+            return LEPT_PARSE_INVALID_VALUE;
+        dot++;
+    }
+    //  after zero should be '.','E','e' or nothing
+    if (c->json[0] == '0' && !(c->json[1] == '\0' || c->json[1] == 'e' ||
+            c->json[1] == 'E'))
+        return LEPT_PARSE_ROOT_NOT_SINGULAR;
+    dot = c->json;
+    while (*dot != '\0') {
+        if (*dot == 'e' || *dot == 'E') {
+            if (atoi(dot+1) > 308)
+                return LEPT_PARSE_NUMBER_TOO_BIG;
+        }
+        dot++;
+    }
     v->n = strtod(c->json, &end);
     if (c->json == end)
         return LEPT_PARSE_INVALID_VALUE;
