@@ -105,31 +105,47 @@ static int lept_parse_string(lept_context *c, lept_value *v) {
             default:
                 if (ch == '\\') {
                     ch = *p++;
-                    char tmp;
                     switch (ch) {
                         case 'n':
-                            tmp = '\n';
+                            ch = '\n';
                             break;
+                        case 'a':
+                            ch = '\a';
                         case 'b':
-                            tmp = '\b';
+                            ch = '\b';
                             break;
                         case 'f':
-                            tmp = '\f';
+                            ch = '\f';
                             break;
                         case 'r':
-                            tmp = '\r';
+                            ch = '\r';
                             break;
                         case 't':
-                            tmp = '\t';
+                            ch = '\t';
                             break;
                         case '\\':
-                            tmp = '\\';
+                            ch = '\\';
                             break;
+                        case '\"':
+                            ch = '\"';
+                            break;
+                        case '\v':
+                            ch = '\v';
+                            break;
+                        case '\'':
+                            ch = '\'';
+                            break;
+                        case '\?':
+                            ch = '\?';
+                            break;
+                        case '\0':
+                            ch = '\0';
+                            break;
+                        default:
+                            return LEPT_PARSE_INVALID_STRING_ESCAPE;
                     }
-                    PUTC(c, tmp);
-                } else {
-                    PUTC(c, ch);
                 }
+                PUTC(c, ch);
         }
     }
 }
