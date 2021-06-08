@@ -2,7 +2,11 @@
 #include <assert.h>  /* assert() */
 #include <stdlib.h>  /* NULL */
 
-#define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
+#define EXPECT(c, ch)  \
+    do { \
+        assert(*c->json == (ch));\
+        c->json++; \
+    } while(0)
 
 typedef struct {
     const char* json;
@@ -13,6 +17,38 @@ static void lept_parse_whitespace(lept_context* c) {
     while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
         p++;
     c->json = p;
+}
+
+static int lept_parse_literal(lept_context* c, lept_value* v,
+                              const char* literal, lept_type type) {
+    EXPECT(c,literal[0]);
+    size_t i;
+    for(i = 0; literal[i + 1]; i++)
+        if (literal[i + 1] != c->json[i+1])
+            return LEPT_PARSE_INVALID_VALUE;
+    c->json+=i;
+    v->type = type;
+    return LEPT_PARSE_OK;
+
+}
+
+static int lept_parse_false(lept_context* c, lept_value* v) {
+    EXPECT(c, 'f');
+    if (c->json[0] != 'a' || c->json[1] != 'l' || c->json[2] !='s'
+        || c->json[3] != 'e')
+        return  LEPT_PARSE_INVALID_VALUE;
+    c->json += 4;
+    v->type = LEPT_FALSE;
+    return LEPT_PARSE_OK;
+}
+
+static int lept_parse_true(lept_context* c, lept_value* v) {
+    EXPECT(c, 't');
+    if (c->json[0] != 'r' || c->json[1] != 'u' || c->json[2] != 'e')
+        return LEPT_PARSE_INVALID_VALUE;
+    c->json += 3;
+    v->type = LEPT_TRUE;
+    return LEPT_PARSE_OK;
 }
 
 static int lept_parse_null(lept_context* c, lept_value* v) {
